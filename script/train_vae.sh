@@ -3,25 +3,27 @@ if [ -z "$1" ]
     echo "Require NGPU input; "
     exit
 fi
-DATA=" ddpm.input_dim 3 data.cates car "
+DATA=" ddpm.input_dim 3 data.cates neuron "
 NGPU=$1 # 
 num_node=1
-BS=32 
+BS=2
 total_bs=$(( $NGPU * $BS ))
 if (( $total_bs > 128 )); then 
     echo "[WARNING] total batch_size larger than 128 may lead to unstable training, please reduce the size"
     exit
 fi
 
-ENT="python train_dist.py --num_process_per_node $NGPU "
+ENT="srun -n 1 -p node03 --gres=gpu:1 --pty python train_dist.py --num_process_per_node $NGPU "
 kl=0.5  
 lr=1e-3
 latent=1
 skip_weight=0.01 
 sigma_offset=6.0
 loss='l1_sum'
+ckpt="./lion_ckpt/unconditional/all55/checkpoints/vae_only.pt"
 
 $ENT ddpm.num_steps 1 ddpm.ema 0 \
+    sde.vae_checkpoint $ckpt \
     trainer.opt.vae_lr_warmup_epochs 0 \
     latent_pts.ada_mlp_init_scale 0.1 \
     sde.kl_const_coeff_vada 1e-7 \

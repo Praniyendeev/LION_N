@@ -219,6 +219,10 @@ def get_args():
 
 if __name__ == '__main__':
     args, config = get_args()
+    # print(config)
+    import pickle 
+    with open("vae_configs.pkl",'wb') as f:
+        pickle.dump((args,config),f)
     args.ntest = int(args.ntest) if args.ntest is not None else None
     size = args.num_process_per_node
 
@@ -248,6 +252,6 @@ if __name__ == '__main__':
         args.global_size = 1
         utils.init_processes(0, size, main, args, config)
     logger.info('should end now')
-    # if args.distributed:
-    #    logger.info('destroy_process_group')
-    #    dist.destroy_process_group()
+    if args.distributed:
+       logger.info('destroy_process_group')
+       dist.destroy_process_group()

@@ -1,21 +1,21 @@
-bash_name: ../exp/tmp/2022_0407_1347_21.sh
+bash_name: ../exp/tmp/2022_0416_1418_42.sh
 clipforge:
   clip_model: ViT-B/32
   enable: 0
   feat_dim: 512
-cmt: l2e-4GlobalP2048D03
+cmt: l2e-4GlobalP2048D04
 comet_key: ''
 data:
-  batch_size: 20
+  batch_size: 10
   batch_size_test: 10
-  cates: can
+  cates: chair
   clip_forge_enable: 0
   clip_model: ViT-B/32
   cond_on_cat: 0
   cond_on_voxel: 0
-  data_dir: data/ShapeNetCore.v2.PC15k
+  data_dir: /mnt/nvme/node03/pranav/CellType/data/hemibrain/raw_swc
   dataset_scale: 1
-  dataset_type: shapenet15k
+  dataset_type: hemibrain
   eval_test_split: 0
   input_dim: -1
   is_encode_whole_dataset_trainer: 0
@@ -35,7 +35,7 @@ data:
   te_max_sample_points: 2048
   tr_max_sample_points: 2048
   train_drop_last: 1
-  type: datasets.pointflow_datasets
+  type: datasets.neuron_datasets
   voxel_size: 0.1
 ddpm:
   add_point_feat: true
@@ -82,9 +82,9 @@ eval:
   need_denoise: 0
 eval_ddim_step: 0
 eval_trainnll: 0
-exp_name: 0407/car/fbb941h_train_l2e-4GlobalP2048D03_vae_adainB20l1E3W8
+exp_name: 0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
 has_shapelatent: 1
-hash: fbb941h
+hash: afc967h
 latent_pts:
   ada_mlp_init_scale: 0.1
   decoder_layer_out_dim: 32
@@ -105,13 +105,13 @@ latent_pts:
   weight_kl_feat: 1.0
   weight_kl_glb: 1.0
   weight_kl_pt: 1.0
-log_dir: ../exp/0407/car/fbb941h_train_l2e-4GlobalP2048D03_vae_adainB20l1E3W8
-log_name: ../exp/0407/car/fbb941h_train_l2e-4GlobalP2048D03_vae_adainB20l1E3W8
+log_dir: ../exp/0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
+log_name: ../exp/0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
 model_config: default
 ngpu: 8
 num_ref: 0
 num_val_samples: 24
-save_dir: ../exp/0407/car/fbb941h_train_l2e-4GlobalP2048D03_vae_adainB20l1E3W8
+save_dir: ../exp/0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
 sde:
   attn_mhead: 0
   attn_mhead_local: -1
@@ -130,7 +130,7 @@ sde:
   denoising_stddevs: beta
   diffusion_steps: 1000
   drop_inactive_var: 0
-  dropout: 0.3
+  dropout: 0.4
   ema_decay: 0.9999
   embedding_dim: 128
   embedding_scale: 1.0
@@ -195,7 +195,7 @@ sde:
   update_q_ema: false
   use_adam: true
   use_adamax: false
-  vae_checkpoint: ../exp/0326/car/f91abeh_hvae_kl0.5N32H1Anneall1_sumWlrInitScale_vae_adainB32l1E3W4/checkpoints/epoch_7999_iters_151999.pt
+  vae_checkpoint: /mnt2/3dgen/exp/0310/chair/78ea16h_hvae_kl0.5N32H1Anneall1_sumWlrInitScale_vae_adainB32l1E3W4/checkpoints/epoch_7999_iters_287999.pt
   warmup_epochs: 20
   weight_decay: 0.0003
   weight_decay_norm_dae: 0.0
@@ -220,7 +220,7 @@ test_size: 660
 trainer:
   anneal_kl: 1
   apply_loss_weight_1_kl: 0
-  epochs: 18000
+  epochs: 24000
   kl_balance: 0
   kl_free:
   - 0
@@ -245,7 +245,7 @@ trainer:
     vae_lr_warmup_epochs: 0
     weight_decay: 0.0
   rec_balance: 0
-  seed: 1
+  seed: 100
   sn_reg_vae: 0
   sn_reg_vae_weight: 0.0
   type: trainers.train_2prior

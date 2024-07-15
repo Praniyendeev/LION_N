@@ -23,8 +23,8 @@ OVERFIT = 0
 
 # taken from https://github.com/optas/latent_3d_points/blob/
 # 8e8f29f8124ed5fc59439e8551ba7ef7567c9a37/src/in_out.py
-synsetid_to_cate = {
-    '02691156': 'airplane',
+synsetid_to_cate = {'02747177': 'can'}
+pinkj={    '02691156': 'airplane',
     '02773838': 'bag',
     '02801938': 'basket',
     '02808440': 'bathtub',
@@ -149,8 +149,10 @@ class ShapeNet15kPointClouds(Dataset):
         self.cate_idx_lst = []
         self.all_points = []
         tic = time.time()
+        
         for cate_idx, subd in enumerate(self.subdirs):
             # NOTE: [subd] here is synset id
+            print(root_dir, subd, self.split)
             sub_path = os.path.join(root_dir, subd, self.split)
             if not os.path.isdir(sub_path):
                 print("Directory missing : %s " % (sub_path))

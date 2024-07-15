@@ -228,7 +228,7 @@ class Model(nn.Module):
 
         batch_size = x.shape[0]
         # CHECKDIM(x, 2, self.input_dim)
-        assert(x.shape[2] == self.input_dim)
+        assert(x.shape[2] == self.input_dim),(x.shape,self.input_dim)
         
         inputs = noisy_input if noisy_input is not None else x  
         output = self.recont(inputs, target=x, class_label=class_label)

@@ -255,12 +255,12 @@ cfg.data.noise_type = 'normal'  # std for the noise added to the input data
 cfg.data.noise_std_min = -1.0  # for range of noise std
 cfg.data.clip_forge_enable = 0
 cfg.data.clip_model = 'ViT-B/32'
-cfg.data.type = "datasets.pointflow_datasets"
+cfg.data.type = "datasets.neuron_datasets"
 # datasets/neuralspline_datasets datasets/shape_curvature
 cfg.data.dataset_type = "shapenet15k"
 cfg.data.num_workers = 12  # 8
 cfg.data.train_drop_last = 1  # drop_last for train data loader
-cfg.data.cates = 'chair'  # data category
+cfg.data.cates = 'neuron'  # data category
 cfg.data.tr_max_sample_points = 2048
 cfg.data.te_max_sample_points = 2048
 cfg.data.data_dir = "data/ShapeNetCore.v2.PC15k"  # depreciated

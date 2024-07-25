@@ -10,7 +10,7 @@ mem=32
 BS=32
 lr=1e-6
 ENT="srun -n 1 -p gpu -c 4 --mem=20G --gres=gpu:1 --time=2-2:30 --pty python train_dist.py --num_process_per_node $NGPU "
-train_vae=False
+train_vae=True
 cmt="lion"
 vae_ckpt="./lion_ckpt/unconditional/all55/checkpoints/best_vae7_21.pt"
 dae_ckpt="./lion_ckpt/unconditional/all55/checkpoints/epoch_10999_iters_2100999.pt"

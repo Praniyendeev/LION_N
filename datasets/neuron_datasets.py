@@ -41,6 +41,7 @@ class NeuronPointClouds(Dataset):
                  all_points_mean=None,
                  all_points_std=None,
                  input_dim=3, 
+                 sampling="random",
                  ):
         print("##############################################################################")
         print("##############################################################################")
@@ -56,23 +57,27 @@ class NeuronPointClouds(Dataset):
         self.display_axis_order = [0, 1, 2]
         self.all_points_mean = 0
         self.all_points_std = 1
+        self.sampling = sampling
 
         #path init
-        swc_path = "./hemibrain/raw_swc"
-        swc_path = "/mnt/nvme/node03/pranav/CellType/data/hemibrain/raw_swc"
+        swc_path = "/compute1/pranav/neuron_swc/hemibrain/swc_02res"
+        # swc_path = "/mnt/nvme/node03/pranav/CellType/data/hemibrain/raw_swc"
         if os.path.exists(swc_path+f"/{split}_split.pkl"):
             with open(swc_path+f"/{split}_split.pkl",'rb') as f:
                 self.swc_list = pickle.load(f)
         else:
             
             self.swc_list =[sp for sp in os.listdir(swc_path) if os.path.isfile(swc_path+"/"+sp)]
+            idx=np.random.choice(len(self.swc_list ),len(self.swc_list ) ,replace=False)
+            
             offset = 0
             for split_name, split_val in splits.items():
                 split_len = int( len(self.swc_list)*split_val)
-                swc_split = self.swc_list[offset:offset+split_len]
+                
+                swc_split = [self.swc_list[i] for i in idx[offset:offset+split_len]] 
                 with open(swc_path+f"/{split_name}_split.pkl",'wb') as f:
                     pickle.dump(swc_split,f)
-                    offset += split_len
+                offset += split_len
 
         self.swc_path=swc_path
 
@@ -88,25 +93,45 @@ class NeuronPointClouds(Dataset):
 
 
     def __getitem__(self, index) -> dict:
-        swc_neuron=navis.read_swc(self.swc_path+"/"+self.swc_list[index])
-        point_neuron=navis.make_dotprops(swc_neuron)
-        idx=np.random.choice(len(point_neuron.points),self.tr_sample_size)
-        if len(point_neuron.points) > self.tr_sample_size :
-            point_cloud_neuron =o3d.geometry.PointCloud(  o3d.utility.Vector3dVector(point_neuron.points))
-            point_cloud_neuron=point_cloud_neuron.farthest_point_down_sample(self.tr_sample_size)
-            point_tensor =torch.Tensor(point_cloud_neuron.points) #[None,:,:]
-        else:
-            # idx=np.random.choice(len(point_neuron.points),self.tr_sample_size)
-            point_tensor =torch.from_numpy(point_neuron.points[idx])# [None,:,:]
+        
+        if ".swc" in self.swc_list[index]:
+            swc_neuron=navis.read_swc(self.swc_path+"/"+self.swc_list[index])
+            point_neuron=navis.make_dotprops(swc_neuron)
+            idx=np.random.choice(len(point_neuron.points),self.tr_sample_size)
+            if len(point_neuron.points) > self.tr_sample_size :
+                point_cloud_neuron =o3d.geometry.PointCloud(  o3d.utility.Vector3dVector(point_neuron.points))
+                point_cloud_neuron=point_cloud_neuron.farthest_point_down_sample(self.tr_sample_size)
+                point_tensor =torch.Tensor(point_cloud_neuron.points) #[None,:,:]
+            else:
+                # idx=np.random.choice(len(point_neuron.points),self.tr_sample_size)
+                point_tensor =torch.from_numpy(point_neuron.points[idx])# [None,:,:]
 
-        if self.standardize:
-            point_tensor=(point_tensor-point_tensor.min())/(point_tensor.max()-point_tensor.min())
-            point_tensor = 2 * point_tensor -1
-        
-        if self.normalize_global:
-            point_tensor=(point_tensor - self.all_points_mean) / \
-            self.all_points_std
-        
+            if self.standardize:
+                point_tensor=(point_tensor-point_tensor.min())/(point_tensor.max()-point_tensor.min())
+                point_tensor = 2 * point_tensor -1
+
+            if self.normalize_global:
+                point_tensor=(point_tensor - self.all_points_mean) / \
+                self.all_points_std
+        else:
+            point_npy  = np.load(self.swc_path+"/"+self.swc_list[index])
+            if len(point_npy)>self.tr_sample_size:
+                if self.sampling =="random":
+                    idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=False)
+                    point_npy = point_npy[idx]
+                elif self.sampling =="farthest":
+                    # 10 min overhead, if sequential loading
+                    point_cloud_neuron =o3d.geometry.PointCloud(  o3d.utility.Vector3dVector(point_npy))
+                    point_cloud_neuron=point_cloud_neuron.farthest_point_down_sample(self.tr_sample_size)
+                    point_npy=point_cloud_neuron.points
+            else:
+                idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=True)
+                point_npy = point_npy[idx]
+                
+            point_tensor = torch.from_numpy(point_npy)
+            point_tensor = (point_tensor - point_tensor.mean(0))/30 #25-30 is the standard deviation
+            
+            
         # tr_idxs = np.arange(self.tr_sample_size)
         # tr_out = torch.from_numpy(tr_out[tr_idxs, :]).float()
         m, s = self.all_points_mean, self.all_points_std

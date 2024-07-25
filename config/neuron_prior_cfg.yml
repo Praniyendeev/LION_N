@@ -8,7 +8,7 @@ comet_key: ''
 data:
   batch_size: 10
   batch_size_test: 10
-  cates: chair
+  cates: neuron
   clip_forge_enable: 0
   clip_model: ViT-B/32
   cond_on_cat: 0

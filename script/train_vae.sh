@@ -6,16 +6,17 @@ fi
 DATA=" ddpm.input_dim 3 data.cates neuron "
 NGPU=$1 # 
 num_node=1
-BS=2
+BS=32
 total_bs=$(( $NGPU * $BS ))
 if (( $total_bs > 128 )); then 
     echo "[WARNING] total batch_size larger than 128 may lead to unstable training, please reduce the size"
     exit
 fi
 
-ENT="srun -n 1 -p node03 --gres=gpu:1 --pty python train_dist.py --num_process_per_node $NGPU "
+ENT="srun -n 1 -p gpu -c 4 --mem=20G --gres=gpu:1 --time=2-2:30 --pty python train_dist.py --num_process_per_node $NGPU "
+
 kl=0.5  
-lr=1e-3
+lr=1e-6
 latent=1
 skip_weight=0.01 
 sigma_offset=6.0
@@ -33,9 +34,9 @@ $ENT ddpm.num_steps 1 ddpm.ema 0 \
     trainer.opt.beta2 0.99 \
     data.num_workers 4 \
     ddpm.loss_weight_emd 1.0 \
-    trainer.epochs 8000 data.random_subsample 1 \
-    viz.viz_freq -400 viz.log_freq -1 viz.val_freq 200 \
-    data.batch_size $BS viz.save_freq 2000 \
+    trainer.epochs 8000  data.random_subsample 1 \
+    viz.viz_freq -400 viz.log_freq -1 viz.val_freq 2 \
+    data.batch_size $BS viz.save_freq 2 \
     trainer.type 'trainers.hvae_trainer' \
     model_config default shapelatent.model 'models.vae_adain' \
     shapelatent.decoder_type 'models.latent_points_ada.LatentPointDecPVC' \

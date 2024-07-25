@@ -15,7 +15,7 @@ fi
 
 ENT="python train_dist.py --num_process_per_node $NGPU "
 kl=0.5  
-lr=1e-3
+lr=1e-6
 latent=1
 skip_weight=0.01 
 sigma_offset=6.0

@@ -183,7 +183,7 @@ class BaseTrainer(ABC):
         self.num_total_iter = cfg.trainer.epochs * len(train_loader)
         self.model.num_total_iter = self.num_total_iter
 
-        for epoch in range(self.start_epoch, cfg.trainer.epochs):
+        for epoch in range(self.start_epoch,cfg.trainer.epochs):
             self.cur_epoch = epoch
             if args.global_rank == 0:
                 tic_epo = time.time()

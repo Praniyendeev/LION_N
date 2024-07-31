@@ -36,8 +36,9 @@ class LION(object):
 
     @torch.no_grad()
     def sample(self, num_samples=10, clip_feat=None, save_img=False,glob=None,local=None,ts=1000):
-        self.scheduler.set_timesteps(ts, device='cuda')
+        self.scheduler.set_timesteps(1000, device='cuda')
         timesteps = self.scheduler.timesteps
+        # print(timesteps)
         latent_shape = self.vae.latent_shape()
         global_prior, local_prior = self.priors[0], self.priors[1]
         assert(not local_prior.mixed_prediction and not global_prior.mixed_prediction)
@@ -48,7 +49,7 @@ class LION(object):
         x_T_shape = [num_samples] + latent_shape[0]
         x_noisy = torch.randn(size=x_T_shape, device='cuda') if glob is None else glob
         condition_input = None
-        for i, t in enumerate(timesteps):
+        for i, t in enumerate(timesteps[-ts:]):
             t_tensor = torch.ones(num_samples, dtype=torch.int64, device='cuda') * (t+1)
             noise_pred = global_prior(x=x_noisy, t=t_tensor.float(), 
                     condition_input=condition_input, clip_feat=clip_feat)
@@ -64,7 +65,7 @@ class LION(object):
 
         x_noisy = torch.randn(size=x_T_shape, device='cuda') if local is None else local
 
-        for i, t in enumerate(timesteps):
+        for i, t in enumerate(timesteps[-ts:]):
             t_tensor = torch.ones(num_samples, dtype=torch.int64, device='cuda') * (t+1)
             noise_pred = local_prior(x=x_noisy, t=t_tensor.float(), 
                     condition_input=condition_input, clip_feat=clip_feat)

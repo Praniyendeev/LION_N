@@ -19,7 +19,7 @@ data:
   eval_test_split: 0
   input_dim: -1
   is_encode_whole_dataset_trainer: 0
-  nclass: 55
+  nclass: 1
   noise_std: 0.1
   noise_std_min: -1.0
   noise_type: normal
@@ -110,7 +110,7 @@ log_name: ../exp/0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
 model_config: default
 ngpu: 8
 num_ref: 0
-num_val_samples: 24
+num_val_samples: 32
 save_dir: ../exp/0416/chair/afc967h_train_l2e-4GlobalP2048D04_vae_adainB20l1E3W8
 sde:
   attn_mhead: 0

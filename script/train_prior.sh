@@ -5,13 +5,13 @@ if [ -z "$1" ]
 fi
 loss="mse_sum"
 NGPU=$1 ## 1 #8
-num_node=2
+# num_node=2
 mem=32
 BS=32
-lr=1e-6
+lr=1e-5
 ENT="srun -n 1 -p gpu -c 4 --mem=20G --gres=gpu:1 --time=2-2:30 --pty python train_dist.py --num_process_per_node $NGPU "
-train_vae=True
-cmt="lion"
+train_vae=False
+cmt="lion_2048"
 vae_ckpt="./lion_ckpt/unconditional/all55/checkpoints/best_vae7_21.pt"
 dae_ckpt="./lion_ckpt/unconditional/all55/checkpoints/epoch_10999_iters_2100999.pt"
 
@@ -19,7 +19,7 @@ $ENT \
     --config "/compute1/pranav/LION_N/config/neuron_prior_cfg.yml" \
     latent_pts.pvd_mse_loss 1 \
     vis_latent_point 1 \
-    num_val_samples 24 \
+    num_val_samples 32 \
     ddpm.ema 1 \
     ddpm.use_bn False ddpm.use_gn True \
     ddpm.time_dim 64 \
@@ -34,8 +34,8 @@ $ENT \
     sde.prior_model 'models.latent_points_ada_localprior.PVCNN2Prior' \
     sde.train_vae $train_vae \
     sde.embedding_scale 1.0 \
-    viz.save_freq 1000 \
-    viz.viz_freq -200 viz.log_freq -1 viz.val_freq 10 \
+    viz.save_freq 4 \
+    viz.viz_freq -200 viz.log_freq -1 viz.val_freq 4 \
     data.batch_size $BS \
     trainer.type 'trainers.train_2prior' \
     cmt $cmt 

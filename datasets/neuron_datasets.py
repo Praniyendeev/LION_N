@@ -95,6 +95,7 @@ class NeuronPointClouds(Dataset):
     def __getitem__(self, index) -> dict:
         
         if ".swc" in self.swc_list[index]:
+            #if loading from swc (takes longer)
             swc_neuron=navis.read_swc(self.swc_path+"/"+self.swc_list[index])
             point_neuron=navis.make_dotprops(swc_neuron)
             idx=np.random.choice(len(point_neuron.points),self.tr_sample_size)
@@ -114,21 +115,24 @@ class NeuronPointClouds(Dataset):
                 point_tensor=(point_tensor - self.all_points_mean) / \
                 self.all_points_std
         else:
+            # if loading from .npy files
             point_npy  = np.load(self.swc_path+"/"+self.swc_list[index])
+            
             if len(point_npy)>self.tr_sample_size:
+                idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=False)
                 if self.sampling =="random":
-                    idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=False)
+                    # idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=False)
                     point_npy = point_npy[idx]
                 elif self.sampling =="farthest":
                     # 10 min overhead, if sequential loading
                     point_cloud_neuron =o3d.geometry.PointCloud(  o3d.utility.Vector3dVector(point_npy))
                     point_cloud_neuron=point_cloud_neuron.farthest_point_down_sample(self.tr_sample_size)
-                    point_npy=point_cloud_neuron.points
+                    point_npy=np.asarray(point_cloud_neuron.points)
             else:
                 idx=np.random.choice(len(point_npy),self.tr_sample_size,replace=True)
                 point_npy = point_npy[idx]
-                
-            point_tensor = torch.from_numpy(point_npy)
+            
+            point_tensor = torch.from_numpy(point_npy).float()
             point_tensor = (point_tensor - point_tensor.mean(0))/30 #25-30 is the standard deviation
             
             
@@ -185,6 +189,7 @@ def get_datasets(cfg, args):
         tr_sample_size=cfg.tr_max_sample_points,
         scale=cfg.dataset_scale,
         normalize_global=cfg.normalize_global,
+        sampling ="random",
         **kwargs
 
     )
@@ -193,6 +198,7 @@ def get_datasets(cfg, args):
         tr_sample_size=cfg.tr_max_sample_points,
         scale=cfg.dataset_scale,
         normalize_global=cfg.normalize_global,
+        sampling ="random",
         **kwargs
 
     )

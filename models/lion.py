@@ -10,20 +10,26 @@ from models.latent_points_ada_localprior import PVCNN2Prior as LocalPrior
 from utils.diffusion_pvd import DiffusionDiscretized
 from utils.vis_helper import plot_points
 from utils.model_helper import import_model
-from diffusers import DDPMScheduler
+from diffusers import DDPMScheduler,DDIMScheduler
 import torch
 from matplotlib import pyplot as plt
 
 class LION(object):
-    def __init__(self, cfg):
+    def __init__(self, cfg, scheduler ="ddpm"):
         self.vae = VAE(cfg).cuda()
         GlobalPrior = import_model(cfg.latent_pts.style_prior)
         global_prior = GlobalPrior(cfg.sde, cfg.latent_pts.style_dim, cfg).cuda()
         local_prior = LocalPrior(cfg.sde, cfg.shapelatent.latent_dim, cfg).cuda()
         self.priors = torch.nn.ModuleList([global_prior, local_prior])
-        self.scheduler = DDPMScheduler(clip_sample=False,
-                                       beta_start=cfg.ddpm.beta_1, beta_end=cfg.ddpm.beta_T, beta_schedule=cfg.ddpm.sched_mode,
-                                       num_train_timesteps=cfg.ddpm.num_steps, variance_type=cfg.ddpm.model_var_type)
+        if scheduler =="ddpm":
+            self.scheduler = DDPMScheduler(clip_sample=False,
+                                           beta_start=cfg.ddpm.beta_1, beta_end=cfg.ddpm.beta_T, beta_schedule=cfg.ddpm.sched_mode,
+                                           num_train_timesteps=cfg.ddpm.num_steps, variance_type=cfg.ddpm.model_var_type)
+        elif scheduler =="ddim":
+            self.scheduler =DDIMScheduler(clip_sample=False,
+                                          beta_start=cfg.ddpm.beta_1, beta_end=cfg.ddpm.beta_T, beta_schedule=cfg.ddpm.sched_mode, 
+                                          num_train_timesteps=cfg.ddpm.num_steps )
+            
         self.diffusion = DiffusionDiscretized(None, None, cfg)
         # self.load_model(cfg)
 

@@ -23,6 +23,7 @@ import numpy as np
 from loguru import logger
 import torch.distributed as dist
 from torch import optim
+import navis
 from utils.ema import EMA
 from utils.model_helper import import_model, loss_fn
 from utils.vis_helper import visualize_point_clouds_3d
@@ -191,7 +192,33 @@ class Trainer(PriorTrainer):
     # ------------------------------------------- #
     #   training fun                              #
     # ------------------------------------------- #
+    def vec_loss(self,pred_pc_batch, input_vec_batch,loss=F.l1_loss):
+        assert pred_pc_batch.ndim ==3,  (pred_pc_batch.shape,pred_pc_batch.ndim)
+        list_pc = [pc.detach().cpu().numpy() for pc in pred_pc_batch]
+        vectors = []
+        for k in list_pc:
+            awe=navis.make_dotprops(k)
+            vectors.append(awe.vect)
+        vectors =np.stack(vectors)
+        assert vectors.shape ==pred_pc_batch.shape ,(vectors.shape,pred_pc_batch.shape)
+        pred_vec_batch =torch.from_numpy(vectors).to("cuda")
 
+        return loss(input_vec_batch,pred_vec_batch)
+    
+    def dist_loss(self,input_pc,pred_pc,k=5,loss=F.l1_loss):
+        
+        input_dist = torch.cdist(input_pc, input_pc)
+        pred_dist = torch.cdist(pred_pc, pred_pc)
+        
+        inp_kdist, idx = input_dist.topk(k=k+1, dim=-1, largest=False, sorted=True)
+        
+        inp_kdist = inp_kdist[:, :, 1:]
+        idx = idx[:, :, 1:]
+        
+        pred_kdist=pred_dist.gather(2,idx)
+        
+        return loss(inp_kdist,pred_kdist)
+    
     def train_iter(self, data, *args, **kwargs):
         """ forward one iteration; and step optimizer  
         Args:
@@ -302,8 +329,28 @@ class Trainer(PriorTrainer):
                         pred_params_p = dae[latent_id](eps_t_p, t_p, x0=eps,
                                                        condition_input=condition_input, clip_feat=clip_feat)
 
-                    pred_eps_t0 = (eps_t_p - torch.sqrt(var_t_p)
-                                   * pred_params_p) / m_t_p
+                        pred_eps_t0 = (eps_t_p - torch.sqrt(var_t_p)
+                                    * pred_params_p) / m_t_p
+                        loss_struct=0
+                        if False:
+                            # eps_pred_n = diffusion.sample_q(eps, pred_params_p, var_t_p, m_t_p)
+                            with torch.no_grad():
+                                # pc_n = self.vae.decoder(None, beta=None, context=eps_t_p, style=condition_input.squeeze())
+                                pc_pred_n = self.vae.decoder(None, beta=None, context=pred_eps_t0, style=condition_input.squeeze()) 
+
+                                vec_n = self.tangents(tr_pts)
+                                vec_pred_n = self.tangents(pc_pred_n)
+                                
+                                loss_struct += F.mse_loss(
+                                    vec_pred_n.contiguous().view(B, -1), vec_n.view(B, -1),
+                                    reduction='mean')
+                        if False:
+                            # B,N,3 -> (B,N,k)
+                            # original point cloud -> indices of closest points
+                            pred_pts = self.vae.decoder(None, beta=None, context=pred_eps_t0, style=condition_input.squeeze()) 
+                            loss_struct+=self.dist_loss(tr_pts,pred_pts,5,F.l1_loss)
+
+
 
                     params = utils.get_mixed_prediction(args.mixed_prediction,
                                                         pred_params_p, dae[latent_id].mixing_logit, mixing_component)
@@ -329,7 +376,7 @@ class Trainer(PriorTrainer):
                             'train/p_loss_%d' % latent_id, p_loss.detach().item())
                     p_loss_list.append(p_loss)
             p_loss = sum(p_loss_list)  # torch.cat(p_loss_list, dim=0).sum()
-            loss = p_loss
+            loss = p_loss + loss_struct 
             # update dae parameters
             grad_scalar.scale(p_loss).backward()
             utils.average_gradients(dae.parameters(), distributed)

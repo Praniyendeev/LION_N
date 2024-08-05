@@ -344,7 +344,7 @@ class Trainer(PriorTrainer):
                                 loss_struct += F.mse_loss(
                                     vec_pred_n.contiguous().view(B, -1), vec_n.view(B, -1),
                                     reduction='mean')
-                        if False:
+                        if True:
                             # B,N,3 -> (B,N,k)
                             # original point cloud -> indices of closest points
                             pred_pts = self.vae.decoder(None, beta=None, context=pred_eps_t0, style=condition_input.squeeze()) 
